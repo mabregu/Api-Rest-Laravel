@@ -4,6 +4,8 @@ namespace Tests\Feature\Articles;
 
 use Tests\TestCase;
 use App\Models\Article;
+use App\Models\Category;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class CreateArticleTest extends TestCase
@@ -13,29 +15,33 @@ class CreateArticleTest extends TestCase
     /** @test */
     public function can_create_articles()
     {
+        $user = User::factory()->create();
+        $category = Category::factory()->create();
+
         $response = $this->postJson(route('api.v1.articles.store'), [
-            'title' => 'Test Article',
-            'slug' => 'test-article',
-            'content' => 'Test Article Content',
+            'title' => 'Nuevo artículo',
+            'slug' => 'nuevo-articulo',
+            'content' => 'Contenido del artículo',
+            '_relationships' => [
+                'category' => $category,
+                'author' => $user,
+            ],
         ])->assertCreated();
 
         $article = Article::first();
 
         $response->assertHeader('Location', route('api.v1.articles.show', $article));
 
-        $response->assertExactJson([
-            'data' => [
-                'type' => 'articles',
-                'id' => (string) $article->getRouteKey(),
-                'attributes' => [
-                    'title' => $article->title,
-                    'slug' => $article->slug,
-                    'content' => $article->content,
-                ],
-                'links' => [
-                    'self' => route('api.v1.articles.show', $article),
-                ],
-            ],
+        $response->assertJsonApiResource($article, [
+            'title' => 'Nuevo artículo',
+            'slug' => 'nuevo-articulo',
+            'content' => 'Contenido del artículo'
+        ]);
+
+        $this->assertDatabaseHas('articles', [
+            'title' => 'Nuevo artículo',
+            'user_id' => $user->id,
+            'category_id' => $category->id,
         ]);
     }
 
@@ -133,5 +139,28 @@ class CreateArticleTest extends TestCase
             'title' => 'Test Article',
             'slug' => 'test-article',
         ])->assertJsonApiValidationErrors('content');
+    }
+
+    /** @test */
+    public function category_relationship_is_required()
+    {
+        $this->postJson(route('api.v1.articles.store'), [
+            'title' => 'Test Article',
+            'slug' => 'test-article',
+            'content' => 'Test Article Content',
+        ])->assertJsonApiValidationErrors('relationships.category');
+    }
+
+    /** @test */
+    public function category_must_exist_in_database()
+    {
+        $this->postJson(route('api.v1.articles.store'), [
+            'title' => 'Test Article',
+            'slug' => 'test-article',
+            'content' => 'Test Article Content',
+            '_relationships' => [
+                'category' => Category::factory()->make()
+            ],
+        ])->assertJsonApiValidationErrors('relationships.category');
     }
 }

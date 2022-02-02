@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Rules\Slug;
+use App\Models\Category;
 use Illuminate\Validation\Rule;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -25,6 +26,7 @@ class SaveArticleRequest extends FormRequest
      */
     public function rules()
     {
+        //dd(request()->all());
         return [
             'data.attributes.title' => ['required', 'min:4'],
             'data.attributes.slug' => [
@@ -33,12 +35,46 @@ class SaveArticleRequest extends FormRequest
                 new Slug(),
                 Rule::unique('articles', 'slug')->ignore($this->route('article')),
             ],
-            'data.attributes.content' => 'required',
+            'data.attributes.content' => ['required'],
+            'data.relationships.category.data.id' => [
+                Rule::requiredIf(!$this->route('article')),
+                Rule::exists('categories', 'slug'),
+            ],
+            'data.relationships.author.data.id' => [
+                // Rule::requiredIf(!$this->route('article')),
+                // Rule::exists('users', 'id'),
+            ],
         ];
     }
 
     public function validated()
     {
-        return parent::validated()['data']['attributes'];
+        $data = parent::validated()['data'];
+        $attributes = $data['attributes'];
+
+        if(isset($data['relationships'])) {
+            $relationships = $data['relationships'];
+
+            foreach ($relationships as $key => $relationship) {
+                $attributes = array_merge($attributes, $this->{$key}($relationship));
+            }
+        }
+
+        return $attributes;
+    }
+
+    public function author($relationship): array
+    {
+        $userUuid = $relationship['data']['id'];
+
+        return ['user_id' => $userUuid];
+    }
+
+    public function category($relationship): array
+    {
+        $categorySlug = $relationship['data']['id'];
+        $category = Category::where('slug', $categorySlug)->first();
+
+        return ['category_id' => $category->id];
     }
 }

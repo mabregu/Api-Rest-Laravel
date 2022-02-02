@@ -22,24 +22,10 @@ class UpdateArticleTest extends TestCase
             'content' => 'Updated Article Content',
         ])->assertOk();
 
-        $response->assertHeader(
-            'Location', 
-            route('api.v1.articles.show', $article)
-        );
-
-        $response->assertExactJson([
-            'data' => [
-                'type' => 'articles',
-                'id' => (string) $article->getRouteKey(),
-                'attributes' => [
-                    'title' => 'Updated Article',
-                    'slug' => $article->slug,
-                    'content' => 'Updated Article Content',
-                ],
-                'links' => [
-                    'self' => route('api.v1.articles.show', $article),
-                ],
-            ],
+        $response->assertJsonApiResource($article, [
+            'title' => 'Updated Article',
+            'slug' => $article->slug,
+            'content' => 'Updated Article Content'
         ]);
     }
 

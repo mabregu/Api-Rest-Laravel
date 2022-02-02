@@ -46,21 +46,36 @@ class JsonApiQueryBuilder
         };
     }
 
+    public function allowedIncludes(): Closure
+    {
+        return function ($allowedIncludes) {
+            /** @var Builder $this */
+
+            if (request()->isNotFilled('include')) {
+                return $this;
+            }
+
+            $includes = explode(',', request()->input('include'));
+
+            foreach ($includes as $include) {
+                abort_unless(in_array($include, $allowedIncludes), 400, "Invalid include: $include");
+
+                $this->with($include);
+            }
+
+            return $this;
+        };
+    }
+
     public function sparseFieldset(): Closure
     {
         return function () {
             /** @var Builder $this */
             if (request()->isNotFilled('fields')) {
                 return $this;
-            }
+            }            
 
-            $resourceType = $this->model->getTable();
-
-            if (property_exists($this->model, 'resourceType')) {
-                $resourceType = $this->model->resourceType;
-            }
-
-            $fields = explode(',', request()->input('fields.' . $resourceType));
+            $fields = explode(',', request()->input('fields.' . $this->getResourceType()));
 
             $routeKeyName = $this->model->getRouteKeyName();
 
@@ -82,6 +97,18 @@ class JsonApiQueryBuilder
                 $pageName = 'page[number]',
                 $page = request('page.number', 1)
             )->appends(request()->only('sort','filter','page.size'));
+        };
+    }
+
+    public function getResourceType(): Closure
+    {
+        return function () {
+            /** @var Builder $this */
+            if (property_exists($this->model, 'resourceType')) {
+                return $this->model->resourceType;
+            }
+
+            return $this->model->getTable();
         };
     }
 }

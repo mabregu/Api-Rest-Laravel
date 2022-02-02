@@ -25,10 +25,10 @@ class Article extends Model
     protected $casts = [
         'id' => 'integer',
         'category_id' => 'integer',
-        'user_id' => 'integer',
+        'user_id' => 'string',
     ];
 
-    public $resourceType = 'articles';
+    // public $resourceType = 'articles';
 
     public function getRouteKeyName()
     {
@@ -40,18 +40,27 @@ class Article extends Model
         return $this->belongsTo(\App\Models\Category::class);
     }
 
-    public function user()
+    public function author()
     {
-        return $this->belongsTo(\App\Models\User::class);
+        return $this->belongsTo(\App\Models\User::class, 'user_id');
     }
 
     public function scopeYear(Builder $query, $year)
     {
-        return $query->whereYear('created_at', $year);
+        $query->whereYear('created_at', $year);
     }
 
     public function scopeMonth(Builder $query, $month)
     {
-        return $query->whereMonth('created_at', $month);
+        $query->whereMonth('created_at', $month);
+    }
+
+    public function scopeCategories(Builder $query, $categories)
+    {
+        $categorySlugs = explode(',', $categories);
+
+        $query->whereHas('category', function ($query) use ($categorySlugs) {
+            $query->whereIn('slug', $categorySlugs);
+        });
     }
 }

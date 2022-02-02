@@ -2,6 +2,7 @@
 
 namespace Tests;
 
+use App\JsonApi\Document;
 use Illuminate\Support\Str;
 use Illuminate\Testing\TestResponse;
 
@@ -44,14 +45,13 @@ trait MakesJsonApiRequests
 
         $path = parse_url($uri)['path'];
         $type = (string) Str::of($path)->after('api/v1/')->before('/');
-        $id = (string) Str::of($uri)->after($type)->replace('/', '');
+        $id = (string) Str::of($uri)->after($type)->replace('/', '');        
 
-        return [
-            'data' => array_filter([
-                'type' => $type,
-                'id' => $id,
-                'attributes' => $data,
-            ])
-        ];
+        return Document::type($type)
+            ->id($id)
+            ->attributes($data)
+            ->relationshipData($data['_relationships'] ?? [])
+            ->toArray()
+        ;
     }
 }
