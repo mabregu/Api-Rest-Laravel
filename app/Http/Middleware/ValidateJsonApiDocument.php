@@ -3,7 +3,9 @@
 namespace App\Http\Middleware;
 
 use Closure;
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class ValidateJsonApiDocument
 {
@@ -20,7 +22,12 @@ class ValidateJsonApiDocument
             $request->validate([
                 'data' => ['required', 'array'],
                 'data.type' => ['required', 'string'],
-                'data.attributes' => ['required', 'array'],
+                'data.attributes' => [
+                    Rule::requiredIf(
+                        ! Str::of(request()->url())->contains('relationships')
+                    ),
+                    'array'
+                ],
             ]);
         }
 
