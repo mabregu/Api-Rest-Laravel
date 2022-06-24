@@ -5,10 +5,40 @@ namespace App\JsonApi;
 use Closure;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Assert as PHPUnit;
+use PHPUnit\Framework\InvalidArgumentException;
 use PHPUnit\Framework\ExpectationFailedException;
 
 class JsonApiTestResponse
 {
+    public function assertJsonApiError(): Closure
+    {
+        return function ($title = null, $detail = null, $status = null, $meta = null) {
+            /** @var TestResponse $this */
+            try {
+                $this->assertJsonStructure([
+                    'errors' => [
+                        '*' => ['title', 'detail']
+                    ]
+                ]);
+            } catch (InvalidArgumentException $e) {
+                PHPUnit::fail(
+                    "Error objects MUST be as an array keyed by errors in the top level of a JSON API document.\n\n"
+                    . PHP_EOL . PHP_EOL .
+                        $e->getMessage()
+                );
+            }
+
+
+            $title && $this->assertJsonFragment(['title' => $title]);
+            $detail && $this->assertJsonFragment(['detail' => $detail]);
+            $status && $this->assertJsonFragment(['status' => $status]);
+
+            $this->assertStatus((int) $status);
+
+            return $this;
+        };
+    }
+
     public function assertJsonApiValidationErrors(): Closure
     {
         return function ($attribute) {

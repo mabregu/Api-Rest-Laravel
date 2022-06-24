@@ -4,6 +4,8 @@ namespace App\JsonApi;
 
 use Closure;
 use Illuminate\Support\Str;
+use Illuminate\Database\Eloquent\Builder;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 class JsonApiQueryBuilder
 {
@@ -19,7 +21,9 @@ class JsonApiQueryBuilder
 
                     $sortField = ltrim($sortField, '-');
 
-                    abort_unless(in_array($sortField, $allowedSortFields), 400, 'Invalid sort field');
+                    if (! in_array($sortField, $allowedSortFields)) {
+                        throw new BadRequestHttpException("The sort field '{$sortField}' is not allowed in the '{$this->getResourceType()}' resource type.");
+                    }
 
                     $this->orderBy($sortField, $sortDirection);
                 }
@@ -34,7 +38,10 @@ class JsonApiQueryBuilder
         return function ($allowedFilters) {
             /** @var Builder $this */
             foreach (request('filter', []) as $filter => $value) {
-                abort_unless(in_array($filter, $allowedFilters), 400, "Invalid filter: $filter");
+
+                if (!in_array($filter, $allowedFilters)) {
+                    throw new BadRequestHttpException("The filter '{$filter}' is not allowed in the '{$this->getResourceType()}' resource type.");
+                }
 
                 $this->hasNamedScope($filter)
                     ? $this->{$filter}($value)
@@ -58,7 +65,10 @@ class JsonApiQueryBuilder
             $includes = explode(',', request()->input('include'));
 
             foreach ($includes as $include) {
-                abort_unless(in_array($include, $allowedIncludes), 400, "Invalid include: $include");
+
+                if (!in_array($include, $allowedIncludes)) {
+                    throw new BadRequestHttpException("The included relationships '{$include}' is not allowed in the '{$this->getResourceType()}' resource type.");
+                }
 
                 $this->with($include);
             }

@@ -21,6 +21,10 @@ class ArticleAuthorController extends Controller
 
     public function update(Article $article, Request $request)
     {
+        $request->validate([
+            'data.id' => 'exists:users,id',
+        ]);
+
         $userId = $request->input('data.id');
 
         $article->update(['user_id' => $userId]);

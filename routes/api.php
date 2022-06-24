@@ -1,11 +1,13 @@
 <?php
 
-use App\Http\Controllers\Api\ArticleAuthorController;
-use App\Http\Controllers\Api\ArticleCategoryController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\LoginController;
 use App\Http\Controllers\Api\AuthorController;
 use App\Http\Controllers\Api\ArticleController;
 use App\Http\Controllers\Api\CategoryController;
+use App\Http\Middleware\ValidateJsonApiDocument;
+use App\Http\Controllers\Api\ArticleAuthorController;
+use App\Http\Controllers\Api\ArticleCategoryController;
 
 Route::apiResource('articles', ArticleController::class);
 
@@ -38,3 +40,8 @@ Route::patch('articles/{article}/relationships/author', [
 Route::get('articles/{article}/author', [
     ArticleAuthorController::class, 'show'
 ])->name('articles.author');
+
+Route::withoutMiddleware(ValidateJsonApiDocument::class)
+    ->post('login', LoginController::class)
+    ->name('login')
+;

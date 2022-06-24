@@ -40,4 +40,16 @@ class ListArticlesTest extends TestCase
             'content'
         ]);
     }
+
+    /** @test */
+    public function it_returns_a_json_api_error_object_when_an_article_is_not_found()
+    {
+        $this->getJson(route('api.v1.articles.show', 'article-that-does-not-exist'))
+            ->assertJsonApiError(
+                title: 'Not found',
+                detail: 'The resource with id "article-that-does-not-exist" and type "articles" could not be found.',
+                status: "404"
+            )
+        ;
+    }
 }
