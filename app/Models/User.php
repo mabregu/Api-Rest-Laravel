@@ -43,4 +43,14 @@ class User extends Authenticatable
     ];
 
     public $resourceType = 'authors';
+
+    public function permissions()
+    {
+        return $this->belongsToMany(Permission::class);
+    }
+
+    public function givePermissionsTo(Permission $permission)
+    {
+        return $this->permissions()->syncWithoutDetaching($permission);
+    }
 }
