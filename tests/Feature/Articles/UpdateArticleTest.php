@@ -34,7 +34,7 @@ class UpdateArticleTest extends TestCase
     {
         $article = Article::factory()->create();
 
-        Sanctum::actingAs($article->author);
+        Sanctum::actingAs($article->author, ['article:update']);
 
         $response = $this->patchJson(route('api.v1.articles.update', $article), [
             'title' => 'Updated Article',
@@ -61,26 +61,6 @@ class UpdateArticleTest extends TestCase
             'slug' => $article->slug,
             'content' => 'Updated Article Content',
         ])->assertForbidden();
-    }
-
-    /** @test */
-    public function can_update_articles()
-    {
-        $article = Article::factory()->create();
-
-        Sanctum::actingAs($article->author);
-
-        $response = $this->patchJson(route('api.v1.articles.update', $article), [
-            'title' => 'Updated Article',
-            'slug' => $article->slug,
-            'content' => 'Updated Article Content',
-        ])->assertOk();
-
-        $response->assertJsonApiResource($article, [
-            'title' => 'Updated Article',
-            'slug' => $article->slug,
-            'content' => 'Updated Article Content'
-        ]);
     }
 
     /** @test */

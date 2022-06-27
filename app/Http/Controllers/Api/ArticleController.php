@@ -45,6 +45,8 @@ class ArticleController extends Controller
 
     public function store(SaveArticleRequest $request)
     {
+        $this->authorize('create', new Article);
+
         $article = Article::create($request->validated());
 
         return ArticleResource::make($article);

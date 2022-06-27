@@ -41,7 +41,7 @@ class ArticlePolicy
      */
     public function create(User $user)
     {
-        //
+        return $user->tokenCan('article:create');
     }
 
     /**
@@ -53,7 +53,7 @@ class ArticlePolicy
      */
     public function update(User $user, Article $article)
     {
-        return $user->is($article->author);
+        return $user->is($article->author) && $user->tokenCan('article:update');
     }
 
     /**
@@ -65,7 +65,7 @@ class ArticlePolicy
      */
     public function delete(User $user, Article $article)
     {
-        return $user->is($article->author);
+        return $user->is($article->author) && $user->tokenCan('article:delete');
     }
 
     /**
